@@ -1,5 +1,5 @@
 use crossterm::{cursor, execute, terminal, event::{read, Event, KeyCode}};
-use std::{io::{self, Write}, fs};
+use std::{io::{self, Write}, fs, env};
 
 fn write_full(lines: Vec<String>, rows: u16) -> io::Result<()> {
     for i in 0..(rows as usize) {
@@ -16,10 +16,10 @@ fn write_full(lines: Vec<String>, rows: u16) -> io::Result<()> {
     Ok(())
 }
 
-
 fn main() -> io::Result<()> {
-
-    let file_path = "poem.txt";
+    
+    let args: Vec<String> = env::args().collect();
+    let file_path = &args[1];
     let mut lines = if fs::exists(file_path).unwrap() {
         let contents = fs::read_to_string(file_path)
             .expect("Should have been able to read the file");
@@ -93,6 +93,9 @@ fn main() -> io::Result<()> {
                                 if cursor_col < lines[cursor_row].len() {
                                     cursor_col += 1;
                                 }
+                            }
+                            'w' => {
+                                fs::write(file_path, lines.join("\n"))?;
                             }
                             _ => {}
                         }
