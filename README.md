@@ -1,4 +1,4 @@
-My solution to [https://codingchallenges.fyi](coding challenge) "build your own text editor".
+My solution to (https://codingchallenges.fyi)[coding challenge] "build your own text editor".
 
 ## Requirements
 Have Rust and Cargo installed.
