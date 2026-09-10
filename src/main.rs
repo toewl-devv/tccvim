@@ -1,11 +1,39 @@
 use crossterm::{cursor, execute, terminal, event::{read, Event, KeyCode}};
-use std::{io::{self, Write}, vec};
+use std::{io::{self, Write}, fs};
+
+fn write_full(lines: Vec<String>, rows: u16) -> io::Result<()> {
+    for i in 0..(rows as usize) {
+        execute!(io::stdout(),
+                cursor::MoveTo(0, i as u16),
+                terminal::Clear(terminal::ClearType::CurrentLine))?;
+        if i < lines.len() {
+            write!(io::stdout(), "{}", lines[i])?;
+        } else {
+            write!(io::stdout(), "~")?;
+        }
+    }
+
+    Ok(())
+}
+
 
 fn main() -> io::Result<()> {
 
+    let file_path = "poem.txt";
+    let mut lines = if fs::exists(file_path).unwrap() {
+        let contents = fs::read_to_string(file_path)
+            .expect("Should have been able to read the file");
+        contents
+            .split('\n')
+            .map(String::from)
+            .collect()
+    } else {
+        vec![String::new()]
+    };
+
     terminal::enable_raw_mode()?;
 
-    let mut lines: Vec<String> = vec![String::new()];
+    //let mut lines: Vec<String> = vec![String::new()];
 
     // clear and move cursor to 0,0
     execute!(
@@ -13,12 +41,17 @@ fn main() -> io::Result<()> {
         terminal::Clear(terminal::ClearType::All),
         cursor::MoveTo(0, 0),
     )?;
-
+    
+    /*
     // create left column of ~
-    let (_, rows) = terminal::size()?;
     for _ in 1..=rows {
         write!(io::stdout(), "~\r\n")?;
     }
+    */
+
+    let (_, rows) = terminal::size()?;
+    write_full(lines.clone(), rows)?;
+
     execute!(io::stdout(), cursor::MoveTo(0, 0))?;
 
     let mut cursor_row = 0;
@@ -77,10 +110,25 @@ fn main() -> io::Result<()> {
                 }
                 KeyCode::Enter => {
                     // basically need to do the opposite of backspace :/
-                    write!(io::stdout(), "\r\n")?;
+                    let (before, after) = lines[cursor_row].split_at(cursor_col);
+                    let after = after.to_string();
+                    let before = before.to_string();
+                    lines.insert(cursor_row+1, after.to_string());
+                    lines[cursor_row] = before;
                     cursor_row += 1;
                     cursor_col = 0;
-                    lines.insert(cursor_row, String::new());
+                    // print entire text
+                    // print entire text again ig
+                    for i in 0..(rows as usize) {
+                        execute!(io::stdout(),
+                                cursor::MoveTo(0, i as u16),
+                                terminal::Clear(terminal::ClearType::CurrentLine))?;
+                        if i < lines.len() {
+                            write!(io::stdout(), "{}", lines[i])?;
+                        } else {
+                            write!(io::stdout(), "~")?;
+                        }
+                    }
                 }
                 KeyCode::Backspace => {
                     //handle on line or back a line
